@@ -132,6 +132,34 @@ Prowlarr itself isn't bundled here — point `PROWLARR_URL` at whatever instance
 run (its own indexer configuration is out of scope for this compose file). Mount a volume
 over `backend/data` (or set `REDIS_URL`) if you want accounts to survive container rebuilds.
 
+## Deploying on CasaOS / Orange Pi (or any ARM64 device)
+
+Pre-built multi-arch images (`linux/amd64` + `linux/arm64`) are published automatically by
+`.github/workflows/docker-publish.yml` on every push to `main`:
+
+- [`siyamexcom/reel-backend`](https://hub.docker.com/r/siyamexcom/reel-backend)
+- [`siyamexcom/reel-frontend`](https://hub.docker.com/r/siyamexcom/reel-frontend)
+
+Docker automatically pulls the right architecture, so this works the same on an Orange Pi as
+on any x86 machine — no cross-compiling on the device itself. Use
+`docker-compose.casaos.yml` (pulls images instead of building from source, which the Pi
+doesn't need to do):
+
+```bash
+cp backend.env.example backend.env
+# edit backend.env — set FRONTEND_URL to how you'll actually reach this device
+# (e.g. http://192.168.1.50:8080), SESSION_SECRET, TMDB_API_KEY, and Prowlarr details
+docker compose -f docker-compose.casaos.yml up -d
+```
+
+In CasaOS's own UI: use the "Custom Install" / compose-import option, paste the contents of
+`docker-compose.casaos.yml`, and supply the same environment variables (CasaOS's app editor
+lets you set env vars per service if you'd rather not manage a separate `backend.env` file).
+
+**Same CORS caveat as any deployment**: `FRONTEND_URL` must exactly match the URL you type
+into your browser (protocol, host, and port), or the browser will block API requests as
+cross-origin.
+
 ## Features
 
 **Multi-user accounts**
