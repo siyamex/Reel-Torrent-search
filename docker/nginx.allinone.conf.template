@@ -1,8 +1,11 @@
 # Used only by the root Dockerfile (all-in-one image), where backend and
 # frontend run in the same container — so unlike frontend/nginx.conf.template,
 # this can hardcode 127.0.0.1 instead of needing a configurable BACKEND_HOST.
+# The listen port itself IS configurable (HTTP_PORT, default 80) since some
+# app-store UIs (e.g. CasaOS) refuse to let two containers both claim
+# container-side port 80, even though that's not an actual Docker conflict.
 server {
-    listen 80;
+    listen ${HTTP_PORT};
     server_name _;
     root /usr/share/nginx/html;
     index index.html;

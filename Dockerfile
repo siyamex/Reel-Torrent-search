@@ -24,7 +24,10 @@ RUN npm run build
 
 # --- Runtime ---
 FROM node:20-alpine AS runtime
-RUN apk add --no-cache nginx supervisor redis
+# gettext provides envsubst, used to template the nginx port at startup —
+# Alpine's plain nginx package (unlike the official nginx:*-alpine image)
+# has no built-in envsubst-on-templates entrypoint.
+RUN apk add --no-cache nginx supervisor redis gettext
 
 WORKDIR /app/backend
 COPY --from=backend-build /app/backend/dist ./dist
@@ -33,14 +36,20 @@ RUN npm ci --omit=dev
 
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 
-COPY docker/nginx.allinone.conf /etc/nginx/http.d/default.conf
+COPY docker/nginx.allinone.conf.template /etc/nginx/http.d/default.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/start-nginx.sh /usr/local/bin/start-nginx.sh
+RUN chmod +x /usr/local/bin/start-nginx.sh
 
 ENV NODE_ENV=production
 ENV PORT=4000
 # Redis runs inside this same container, bound to localhost only — not
 # reachable from outside, so no separate credentials/exposure to worry about.
 ENV REDIS_URL=redis://127.0.0.1:6379
+# The port nginx listens on INSIDE the container. Override with -e if your
+# platform's UI won't let two containers both claim container-port 80 (e.g.
+# CasaOS) — just make sure it matches whatever "Container" port you map.
+ENV HTTP_PORT=80
 
 EXPOSE 80
 VOLUME ["/data"]

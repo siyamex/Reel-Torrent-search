@@ -168,6 +168,12 @@ PROWLARR_URL=http://<your-prowlarr-host>:9696
 PROWLARR_API_KEY=<your Prowlarr key>
 ```
 
+**If your platform's UI won't let two containers both claim container-port 80** (CasaOS does
+this — it treats container-side ports as if they needed to be globally unique, which isn't
+actually a Docker requirement): map to a different container port instead, e.g. `8080:8080`,
+and add `HTTP_PORT=8080` to the environment variables so nginx inside the container actually
+listens there too. The two values must match.
+
 Equivalent plain `docker run`:
 
 ```bash
