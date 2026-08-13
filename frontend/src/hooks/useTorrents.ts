@@ -7,6 +7,9 @@ export function useTorrents(title: string | undefined, year: number | undefined)
     queryFn: () => torrentService.search(title as string, year),
     enabled: Boolean(title),
     staleTime: 1000 * 60 * 5,
-    retry: 1,
+    // No auto-retry: a slow/unreachable Prowlarr instance retrying the same
+    // long-timeout request just doubles the wait before the user sees an
+    // error. The UI already has an explicit "Try again" button for that.
+    retry: false,
   });
 }

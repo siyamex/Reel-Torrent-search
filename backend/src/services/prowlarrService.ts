@@ -26,7 +26,7 @@ function assertConfigured(): void {
 function getClient() {
   return axios.create({
     baseURL: env.PROWLARR_URL,
-    timeout: 25000,
+    timeout: 10000,
     headers: { 'X-Api-Key': env.PROWLARR_API_KEY },
   });
 }
@@ -102,12 +102,12 @@ function handleProwlarrError(err: unknown): never {
   if (isAxiosError(err)) {
     if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || err.code === 'EHOSTUNREACH') {
       throw ApiError.badGateway(
-        `Prowlarr is unreachable at ${env.PROWLARR_URL}. Check that it's running and PROWLARR_URL is correct.`,
+        `Prowlarr is unreachable at ${env.PROWLARR_URL}. Check that it's running, that PROWLARR_URL is correct, and — if this backend runs in Docker — that the container can actually route to that address (a host's Tailscale/VPN IP often isn't reachable from inside a container's default network; try the LAN IP instead).`,
       );
     }
     if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
       throw ApiError.gatewayTimeout(
-        'Prowlarr took too long to respond. It may be searching too many indexers — try again shortly.',
+        `Prowlarr at ${env.PROWLARR_URL} didn't respond in time. It may be unreachable from this network (if this backend runs in Docker, a host's Tailscale/VPN IP often isn't routable from inside a container — try the LAN IP), or it's just searching a lot of indexers — try again shortly.`,
       );
     }
     if (err.response?.status === 401 || err.response?.status === 403) {
