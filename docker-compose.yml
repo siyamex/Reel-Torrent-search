@@ -18,7 +18,6 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: http://localhost:8080
-      BACKEND_URL: http://localhost:4000
     ports:
       - "4000:4000"
     depends_on:
@@ -28,6 +27,8 @@ services:
   frontend:
     build: ./frontend
     restart: unless-stopped
+    environment:
+      BACKEND_HOST: backend:4000
     ports:
       - "8080:80"
     depends_on:

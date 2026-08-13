@@ -26,6 +26,8 @@ services:
   frontend:
     image: siyamexcom/reel-frontend:latest
     restart: unless-stopped
+    environment:
+      BACKEND_HOST: backend:4000
     ports:
       - "8080:80"
     depends_on:

@@ -1,3 +1,8 @@
+# Templated by the official nginx image's built-in entrypoint (envsubst on
+# files under /etc/nginx/templates/) so BACKEND_HOST can be overridden at
+# `docker run` time — needed when backend/frontend/redis are deployed as
+# separate containers (e.g. CasaOS manual installs) rather than via Compose,
+# where there's no "backend" service-name DNS to resolve.
 server {
     listen 80;
     server_name _;
@@ -5,7 +10,7 @@ server {
     index index.html;
 
     location /api/ {
-        proxy_pass http://backend:4000;
+        proxy_pass http://${BACKEND_HOST};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
