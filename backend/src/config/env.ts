@@ -9,6 +9,15 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
   SESSION_SECRET: z.string().min(16, 'SESSION_SECRET must be at least 16 characters'),
+  // Marks the session cookie as Secure (HTTPS-only). Defaults to false since
+  // most self-hosted deployments (LAN IP, Tailscale, no reverse-proxy TLS)
+  // are served over plain HTTP — a Secure cookie would be silently dropped
+  // by the browser there, breaking login. Only set true if this app is
+  // actually reachable over HTTPS (e.g. behind a TLS-terminating proxy).
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 
   TMDB_API_KEY: z.string().min(1, 'TMDB_API_KEY is required'),
   TMDB_BASE_URL: z.string().url().default('https://api.themoviedb.org/3'),

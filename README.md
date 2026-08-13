@@ -94,6 +94,7 @@ frontend/
 |---|---|---|
 | `TMDB_API_KEY` | Yes | TMDB v3 API key |
 | `SESSION_SECRET` | Yes | Random 16+ char string, used to sign the session cookie |
+| `COOKIE_SECURE` | No | `true`/`false` (default `false`). Only set `true` if served over HTTPS — a `Secure` cookie is silently dropped by the browser over plain HTTP, which breaks login |
 | `PORT` | No | Backend port (default `4000`) |
 | `FRONTEND_URL` | No | Used for CORS origin (default `http://localhost:5173`) |
 | `DATA_DIR` | No | Where user accounts are persisted when `REDIS_URL` isn't set (default `./data`) |

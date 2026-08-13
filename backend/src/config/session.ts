@@ -1,7 +1,7 @@
 import session, { type SessionOptions } from 'express-session';
 import RedisStore from 'connect-redis';
 import Redis from 'ioredis';
-import { env, isProduction } from './env';
+import { env } from './env';
 import { logger } from '../utils/logger';
 
 const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
@@ -40,7 +40,7 @@ export async function createSessionMiddleware() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProduction,
+      secure: env.COOKIE_SECURE,
       sameSite: 'lax',
       maxAge: THIRTY_DAYS_MS,
     },
