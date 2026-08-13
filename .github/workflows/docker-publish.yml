@@ -6,6 +6,8 @@ on:
     paths:
       - "backend/**"
       - "frontend/**"
+      - "docker/**"
+      - "Dockerfile"
       - ".github/workflows/docker-publish.yml"
   workflow_dispatch:
 
@@ -15,10 +17,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - service: backend
-            image: siyamexcom/reel-backend
-          - service: frontend
-            image: siyamexcom/reel-frontend
+          - image: siyamexcom/reel-backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            scope: backend
+          - image: siyamexcom/reel-frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+            scope: frontend
+          - image: siyamexcom/reel
+            context: .
+            dockerfile: ./Dockerfile
+            scope: allinone
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,10 +57,11 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./${{ matrix.service }}
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.service }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          cache-from: type=gha,scope=${{ matrix.scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.scope }}

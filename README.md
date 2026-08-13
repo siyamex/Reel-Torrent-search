@@ -137,13 +137,52 @@ over `backend/data` (or set `REDIS_URL`) if you want accounts to survive contain
 Pre-built multi-arch images (`linux/amd64` + `linux/arm64`) are published automatically by
 `.github/workflows/docker-publish.yml` on every push to `main`:
 
-- [`siyamexcom/reel-backend`](https://hub.docker.com/r/siyamexcom/reel-backend)
-- [`siyamexcom/reel-frontend`](https://hub.docker.com/r/siyamexcom/reel-frontend)
+- [`siyamexcom/reel`](https://hub.docker.com/r/siyamexcom/reel) — **all-in-one**: backend +
+  frontend (nginx) + Redis bundled into a single container. Simplest option, especially for
+  CasaOS's single-container "Manual Install" form, which has no docker-compose import.
+- [`siyamexcom/reel-backend`](https://hub.docker.com/r/siyamexcom/reel-backend) and
+  [`siyamexcom/reel-frontend`](https://hub.docker.com/r/siyamexcom/reel-frontend) — separate
+  images, for docker-compose or if you want to scale/restart each independently.
 
 Docker automatically pulls the right architecture, so this works the same on an Orange Pi as
-on any x86 machine — no cross-compiling on the device itself. Use
-`docker-compose.casaos.yml` (pulls images instead of building from source, which the Pi
-doesn't need to do):
+on any x86 machine — no cross-compiling on the device itself.
+
+### Option A: single container (recommended for CasaOS)
+
+One image, one port, no Redis/networking setup between containers. In CasaOS's "Manual App
+Install" form:
+
+| Field | Value |
+|---|---|
+| Docker Image | `siyamexcom/reel` |
+| Tag | `latest` |
+| Port | container `80` → host `8080` (or whatever's free) |
+| Volume | container `/data` → a host path, e.g. `/DATA/AppData/reel` (persists Redis, which holds accounts/cache/sessions) |
+
+Environment variables:
+```
+FRONTEND_URL=http://<your-device-ip>:8080
+SESSION_SECRET=<a long random string>
+TMDB_API_KEY=<your TMDB key>
+PROWLARR_URL=http://<your-prowlarr-host>:9696
+PROWLARR_API_KEY=<your Prowlarr key>
+```
+
+Equivalent plain `docker run`:
+
+```bash
+docker run -d --name reel --restart unless-stopped \
+  -p 8080:80 \
+  -v reel-data:/data \
+  -e FRONTEND_URL=http://<your-device-ip>:8080 \
+  -e SESSION_SECRET=<a long random string> \
+  -e TMDB_API_KEY=<your TMDB key> \
+  -e PROWLARR_URL=http://<your-prowlarr-host>:9696 \
+  -e PROWLARR_API_KEY=<your Prowlarr key> \
+  siyamexcom/reel:latest
+```
+
+### Option B: docker-compose (separate backend/frontend/redis containers)
 
 ```bash
 cp backend.env.example backend.env
@@ -152,12 +191,17 @@ cp backend.env.example backend.env
 docker compose -f docker-compose.casaos.yml up -d
 ```
 
-In CasaOS's own UI: use the "Custom Install" / compose-import option, paste the contents of
-`docker-compose.casaos.yml`, and supply the same environment variables (CasaOS's app editor
-lets you set env vars per service if you'd rather not manage a separate `backend.env` file).
+### Option C: three separate CasaOS Manual Installs
 
-**Same CORS caveat as any deployment**: `FRONTEND_URL` must exactly match the URL you type
-into your browser (protocol, host, and port), or the browser will block API requests as
+If your CasaOS setup can't run docker-compose directly, `reel-backend`, `reel-frontend`, and
+`redis:7-alpine` can each be installed as their own Manual App, addressing each other via
+your device's LAN IP and published ports (`REDIS_URL=redis://<ip>:6379`,
+`BACKEND_HOST=<ip>:4000` on the frontend). More moving parts than Option A for no real
+benefit in a single-device home setup — only worth it if you specifically want independent
+container lifecycles.
+
+**Same CORS caveat in every option**: `FRONTEND_URL` must exactly match the URL you type into
+your browser (protocol, host, and port), or the browser will block API requests as
 cross-origin.
 
 ## Features
